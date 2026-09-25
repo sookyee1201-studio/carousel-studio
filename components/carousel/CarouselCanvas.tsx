@@ -550,7 +550,7 @@ function LayoutBody({ page, t, M, design, index }: { page: Page; t: Theme; M: nu
       // 一行字的宽度（以「字」为单位）：汉字算 1，英文数字算 0.55
       const em = (ln: string) => [...ln].reduce((a, c) => a + (/[\u2E80-\u9FFF\uFF00-\uFFEF]/.test(c) ? 1 : 0.55), 0);
       const maxEm = Math.max(...lines.map(em), 1);
-      const fs = Math.min(ty.size * t.scale, 1010 / (n * ty.lineHeight), 580 / maxEm);
+      const fs = Math.min(ty.size * t.scale, 1010 / (n * ty.lineHeight), 650 / maxEm);
       const rowH = fs * ty.lineHeight;
       const blockTop = 110 + (1130 - n * rowH) / 2;
       const side = (i: number) => (i === 0 ? "L0" : i === 1 ? "L1" : i % 2 === 0 ? "R" : "L");

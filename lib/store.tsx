@@ -1,6 +1,6 @@
 "use client";
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
-import { ai, AiError, briefOf, mapAnalysis, mapHooks, mapPages, type SrcImage } from "./ai";
+import { ai, AiError, briefOf, mapAnalysis, mapHooks, mapPages, mapPaperPages, type SrcImage } from "./ai";
 import { applyLayout, candidatesFor } from "./engine";
 import { supabase } from "./supabase";
 import {
@@ -329,10 +329,10 @@ export function StudioProvider({ children }: { children: ReactNode }) {
     const ctx = { text: topic.trim() || (image ? `（图片：${image.name}）` : INPUT_PLACEHOLDER.topic), client: "", goal: "Education", platform: "Instagram", audience: "", cta: "Comment" };
     let ps: Page[] = []; let title = topic.trim().slice(0, 40);
     try {
-      const r = await ai<{ title?: string; pages: unknown[] }>("quick", { input: ctx, image: image ? { mime: image.mime, data: image.data } : null });
-      ps = mapPages(r.pages); if (r.title) title = r.title;
+      const r = await ai<{ title?: string; pages: unknown[] }>("quick", { input: ctx, style: "paper", image: image ? { mime: image.mime, data: image.data } : null });
+      ps = mapPaperPages(r.pages); if (r.title) title = r.title;
       if (!ps.length) throw new AiError("EMPTY");
-    } catch (e) { aiFail(e); ps = demoPages(); }
+    } catch (e) { aiFail(e); ps = paperDemoPages(); }
     resetHist.current = true;
     setPages(ps); selectPage(ps[0].id); setApprovedSig(sigOf(ps));
     setProject({ title: title || "未命名 Carousel", client: "" });
@@ -345,8 +345,9 @@ export function StudioProvider({ children }: { children: ReactNode }) {
     setGenPages(true);
     const ctx = { text: input.text.trim() || project.title || INPUT_PLACEHOLDER.topic, client: input.client, goal: input.goal, platform: input.platform, audience: input.audience, cta: input.cta };
     try {
-      const r = await ai<{ pages: unknown[] }>("quick", { input: ctx, image: imgArg() });
-      const ps = mapPages(r.pages); if (!ps.length) throw new AiError("EMPTY");
+      const paper = design.kit === "paper";
+      const r = await ai<{ pages: unknown[] }>("quick", { input: ctx, style: paper ? "paper" : "default", image: imgArg() });
+      const ps = paper ? mapPaperPages(r.pages) : mapPages(r.pages); if (!ps.length) throw new AiError("EMPTY");
       setPages(ps); selectPage(ps[0].id); notify("已重新生成 8 页，可以用撤销恢复。");
     } catch (e) { aiFail(e); }
     setGenPages(false);

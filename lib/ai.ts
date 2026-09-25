@@ -86,3 +86,28 @@ export async function fileToImage(file: File): Promise<SrcImage> {
     return { mime: "image/jpeg", data: dataUrl.split(",")[1], name: file.name, preview: dataUrl };
   } finally { URL.revokeObjectURL(url); }
 }
+
+
+/** Paper Editorial 风格：封面用错落大字 + 气泡，内页用提示卡片，结尾纯文字 */
+export function mapPaperPages(raw: unknown): Page[] {
+  const arr = (Array.isArray(raw) ? raw : []).slice(0, 10) as Record<string, unknown>[];
+  const out: Page[] = arr.map((r, i) => {
+    const role = (ROLES.includes(r.role as Role) ? r.role : "Solution") as Role;
+    const first = i === 0, last = i === arr.length - 1 && arr.length > 2;
+    const layout: LayoutId = first ? "stagger" : last ? "closing" : "prompt-card";
+    const res = (r.result ?? {}) as { kind?: string; title?: string; sub?: string };
+    const kind = res.kind === "doc" || res.kind === "email" || res.kind === "sheet" ? res.kind : "none";
+    const chips = Array.isArray(r.chips) ? (r.chips as unknown[]).map(String).filter(Boolean).slice(0, 5) : [];
+    const tools = Array.isArray(r.tools) ? (r.tools as unknown[]).map(String).filter(Boolean).slice(0, 3) : [];
+    const p = mkPage({
+      role: first ? "Hook" : last ? "CTA" : role, layout,
+      headline: s(r.headline, "（待补标题）"), body: s(r.body), highlight: s(r.highlight),
+      purpose: s(r.purpose, ROLE_PURPOSE[role]?.[0] ?? ""), swipeReason: s(r.swipeReason, ROLE_PURPOSE[role]?.[1] ?? ""),
+      label: "", tone: "base", type: defaultType(layout), image: defaultImage("none"),
+    });
+    p.chips = chips; p.steps = tools.length ? tools : ["Canva", "Excel", "Notion"].slice(0, 2);
+    p.result = { kind: layout === "prompt-card" ? kind : "none", title: s(res.title), sub: s(res.sub) };
+    return p;
+  });
+  return out.length >= 3 ? out : [];
+}
