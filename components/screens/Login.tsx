@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Button, Field } from "@/components/ui";
 import { useStudio } from "@/lib/store";
+import { supabaseConfigured } from "@/lib/supabase";
 
 export default function Login() {
   const { signIn, signUp, setView } = useStudio();
@@ -31,7 +32,7 @@ export default function Login() {
         <form onSubmit={submit} className="w-full max-w-[380px] space-y-6">
           <div>
             <h2 className="text-[28px] font-semibold tracking-[-0.015em]">{mode === "in" ? "登录" : "创建账号"}</h2>
-            <p className="mt-2 text-[15px] text-mute">{mode === "in" ? "登录后，项目会自动保存到你的账号，换设备也能继续。" : "创建账号，跨设备保存你的项目。"}</p>
+            <p className="mt-2 text-[15px] text-mute">{mode === "in" ? "请先登录再使用。项目会自动保存到你的账号，换设备也能继续。" : "创建账号，跨设备保存你的项目。"}</p>
           </div>
           <Field label="邮箱"><input className="field" type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} /></Field>
           <Field label="密码" hint={mode === "up" ? "至少 6 位" : undefined}><input className="field" type="password" required minLength={6} autoComplete={mode === "in" ? "current-password" : "new-password"} value={pw} onChange={(e) => setPw(e.target.value)} /></Field>

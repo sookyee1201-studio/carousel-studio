@@ -32,7 +32,7 @@ export default function AiImageGen({ defaultPrompt, defaultAspect = "4:5", onDon
       onDone(r.url, r.name); notify("Gemini 已生成，已放进这一页。不满意可以撤销。");
     } catch (e) {
       const c = e instanceof AiError ? e.code : "";
-      notify(c === "NO_KEY" ? "还没有设置 GEMINI_API_KEY。" : c === "RATE_LIMIT" ? "生成次数暂时用完了（登录后额度更高）。" : "生成失败，请换个描述再试一次。");
+      notify(c === "NO_KEY" ? "还没有设置 GEMINI_API_KEY。" : c === "UNAUTHORIZED" ? "登录已过期，请重新登录。" : c === "RATE_LIMIT" ? "生成次数暂时用完了。" : "生成失败，请换个描述再试一次。");
     }
     setBusy(false);
   };

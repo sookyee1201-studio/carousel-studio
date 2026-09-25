@@ -44,12 +44,15 @@ function prompt(task: string, b: Record<string, unknown>): string | null {
 export async function POST(req: Request) {
   // 登录用户每小时 120 次，未登录按 IP 每小时 15 次，避免 API 额度被滥用
   const token = req.headers.get("authorization")?.replace("Bearer ", "");
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL, anon = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
   let who = "ip:" + (req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "local");
   let max = 15;
-  if (token && process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) {
-    const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY);
-    const { data } = await sb.auth.getUser(token);
-    if (data.user) { who = "user:" + data.user.id; max = 120; }
+  if (url && anon) {
+    // 已配置登录：必须登录才能调用（保护你的 API 额度）
+    if (!token) return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
+    const { data, error } = await createClient(url, anon).auth.getUser(token);
+    if (error || !data.user) return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
+    who = "user:" + data.user.id; max = 120;
   }
   if (limited(who, max)) return NextResponse.json({ error: "RATE_LIMIT" }, { status: 429 });
 

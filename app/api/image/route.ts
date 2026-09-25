@@ -8,12 +8,15 @@ const ASPECTS = ["4:5", "1:1", "16:9", "3:4"];
 
 export async function POST(req: Request) {
   const token = req.headers.get("authorization")?.replace("Bearer ", "");
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL, anon = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
   let who = "img-ip:" + (req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "local");
   let max = 6;
-  if (token && process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) {
-    const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY);
-    const { data } = await sb.auth.getUser(token);
-    if (data.user) { who = "img-user:" + data.user.id; max = 40; }
+  if (url && anon) {
+    // 已配置登录：必须登录才能调用（保护你的 API 额度）
+    if (!token) return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
+    const { data, error } = await createClient(url, anon).auth.getUser(token);
+    if (error || !data.user) return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
+    who = "img-user:" + data.user.id; max = 40;
   }
   if (limited(who, max)) return NextResponse.json({ error: "RATE_LIMIT" }, { status: 429 });
 

@@ -255,7 +255,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
   const brief = () => briefOf(input, INPUT_PLACEHOLDER.topic);
   const imgArg = () => (srcImage ? { mime: srcImage.mime, data: srcImage.data } : null);
   const aiFail = (e: unknown) =>
-    notify(e instanceof AiError && e.code === "NO_KEY" ? "未配置 GEMINI_API_KEY，已使用示例数据。" : e instanceof AiError && e.code === "RATE_LIMIT" ? "AI 使用次数暂时用完了（登录后额度更高），已使用示例数据。" : "AI 生成失败，已使用示例数据。");
+    notify(e instanceof AiError && e.code === "NO_KEY" ? "未配置 GEMINI_API_KEY，已使用示例数据。" : e instanceof AiError && e.code === "UNAUTHORIZED" ? "登录已过期，请重新登录后再生成。" : e instanceof AiError && e.code === "RATE_LIMIT" ? "AI 使用次数暂时用完了，已使用示例数据。" : "AI 生成失败，已使用示例数据。");
 
   const runAnalyze = async () => {
     setAnalyzing(true); goStep(2);
