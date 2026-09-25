@@ -1,5 +1,5 @@
-import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+import { authConfigured, readSession } from "@/lib/auth";
 import { limited } from "@/lib/rateLimit";
 
 export const maxDuration = 60;
@@ -43,16 +43,13 @@ function prompt(task: string, b: Record<string, unknown>): string | null {
 
 export async function POST(req: Request) {
   // 登录用户每小时 120 次，未登录按 IP 每小时 15 次，避免 API 额度被滥用
-  const token = req.headers.get("authorization")?.replace("Bearer ", "");
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL, anon = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  // 配置了登录就必须先登录（保护你的 API 额度）；没配置（本地开发）时按 IP 限流
   let who = "ip:" + (req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "local");
   let max = 15;
-  if (url && anon) {
-    // 已配置登录：必须登录才能调用（保护你的 API 额度）
-    if (!token) return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
-    const { data, error } = await createClient(url, anon).auth.getUser(token);
-    if (error || !data.user) return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
-    who = "user:" + data.user.id; max = 120;
+  if (authConfigured()) {
+    const email = readSession(req);
+    if (!email) return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
+    who = "user:" + email; max = 120;
   }
   if (limited(who, max)) return NextResponse.json({ error: "RATE_LIMIT" }, { status: 429 });
 

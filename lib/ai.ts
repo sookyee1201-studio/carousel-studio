@@ -1,4 +1,3 @@
-import { supabase } from "./supabase";
 import { candidatesFor } from "./engine";
 import { defaultImage, defaultType, mkPage, ROLE_PURPOSE } from "./mock";
 import type { AnalysisItem, Hook, InputState, LayoutId, Page, Role } from "./types";
@@ -7,11 +6,9 @@ import { ROLES } from "./mock";
 export class AiError extends Error { constructor(public code: string, msg?: string) { super(msg ?? code); } }
 
 export async function ai<T>(task: string, payload: Record<string, unknown>): Promise<T> {
-  const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
   const res = await fetch("/api/generate", {
     method: "POST",
-    headers: { "content-type": "application/json", ...(token ? { authorization: `Bearer ${token}` } : {}) },
+    headers: { "content-type": "application/json" },
     body: JSON.stringify({ task, ...payload }),
   });
   const j = await res.json().catch(() => ({}));

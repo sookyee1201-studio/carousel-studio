@@ -42,7 +42,7 @@ interface Store {
   regenDesign: (id: string) => void; rerollCounter: number;
   analyzing: boolean; runAnalyze: () => void; generatingHooks: boolean; runHooks: () => void; generatingPages: boolean;
   user: { id: string; email: string } | null; authReady: boolean;
-  signIn: (e: string, p: string) => Promise<string | null>; signUp: (e: string, p: string) => Promise<string | null>; signOut: () => void;
+  signIn: (e: string, p: string) => Promise<string | null>; signOut: () => void; authRequired: boolean;
   saved: SavedRow[]; openSaved: (r: SavedRow) => void; deleteSaved: (id: string) => Promise<void>;
   saveState: SaveState; savedAt: Date | null;
 }
@@ -80,6 +80,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
   const [generatingPages, setGenPages] = useState(false);
   const [user, setUser] = useState<Store["user"]>(null);
   const [authReady, setAuthReady] = useState(false);
+  const [authRequired, setAuthRequired] = useState(false);
   const [saved, setSaved] = useState<SavedRow[]>([]);
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<SaveState>("idle");
@@ -366,29 +367,20 @@ export function StudioProvider({ children }: { children: ReactNode }) {
     } catch (e) { aiFail(e); return false; }
   };
 
-  /* ───────── auth ───────── */
+  /* ───────── auth（简单登录：服务器校验，cookie 会话） ───────── */
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      const u = data.session?.user; setUser(u ? { id: u.id, email: u.email ?? "" } : null); setAuthReady(true);
-    });
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      const u = session?.user; setUser(u ? { id: u.id, email: u.email ?? "" } : null);
-    });
-    return () => sub.subscription.unsubscribe();
+    fetch("/api/auth/me").then((r) => r.json()).then((j: { required: boolean; email: string | null }) => {
+      setAuthRequired(!!j.required); setUser(j.email ? { id: j.email, email: j.email } : null); setAuthReady(true);
+    }).catch(() => setAuthReady(true));
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (!error) setView("dashboard");
-    return error ? (error.message.includes("Invalid login") ? "邮箱或密码不正确。" : error.message) : null;
+    const res = await fetch("/api/auth/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email, password }) });
+    const j = await res.json().catch(() => ({}));
+    if (res.ok) { setUser({ id: j.email, email: j.email }); setView("dashboard"); return null; }
+    return res.status === 429 ? "尝试次数太多，请稍后再试。" : res.status === 503 ? "登录还没有配置。" : "邮箱或密码不正确。";
   };
-  const signUp = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signUp({ email, password });
-    if (error) return error.message;
-    if (data.session) setView("dashboard");
-    return data.session ? null : "注册成功，请到邮箱点击验证链接后再登录。";
-  };
-  const signOut = () => { supabase.auth.signOut(); setSaved([]); setCurrentId(null); setView("dashboard"); notify("已退出登录。"); };
+  const signOut = async () => { await fetch("/api/auth/logout", { method: "POST" }).catch(() => {}); setUser(null); setCurrentId(null); setView("dashboard"); notify("已退出登录。"); };
 
   /* ───────── persistence ───────── */
   const refreshSaved = useCallback(async () => {
@@ -397,12 +389,13 @@ export function StudioProvider({ children }: { children: ReactNode }) {
       .select("id,title,client,status,updated_at,pages:data->pages,design:data->design").order("updated_at", { ascending: false });
     if (data) setSaved(data as unknown as SavedRow[]);
   }, []);
-  useEffect(() => { userRef.current = user; }, [user]);
+  const CLOUD = false; // 项目只保存在本机浏览器
+  useEffect(() => { userRef.current = CLOUD ? user : null; }, [user]);
   useEffect(() => {
     if (!authReady) return;
     (async () => {
       const local = readLocal();
-      if (user && local.length) {
+      if (CLOUD && user && local.length) {
         const rows = local.map((r) => ({ title: r.title, client: r.client, status: r.status, data: r.data, updated_at: r.updated_at }));
         const { error } = await supabase.from("carousel_projects").insert(rows);
         if (!error) { writeLocal([]); setCurrentId((c) => (isLocal(c) ? null : c)); notify(`已把 ${rows.length} 个本地项目同步到你的账号。`); }
@@ -424,7 +417,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
       if (snap === lastSnap.current || saving.current) return;
       saving.current = true; setSaveState("saving");
       const row = { title: project.title, client: project.client, status: statusNow(), data, updated_at: new Date().toISOString() };
-      if (!user) {
+      if (!CLOUD || !user) {
         const rows = readLocal(); const id = isLocal(currentId) ? currentId! : "local-" + uid();
         const i = rows.findIndex((r) => r.id === id);
         const next: LocalRow = { id, pages: null, design: null, ...row };
@@ -480,7 +473,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
     selectedPageId: pages.some((p) => p.id === sel) ? sel : pages[0]?.id ?? "", selectPage,
     toast, notify, startNew, openProject, regenDesign, rerollCounter, analyzing, runAnalyze, generatingHooks, runHooks, generatingPages,
     updateAllTypes, setProjectTitle, setProjectClient, advanced, approveAndGo, regenAll, startPaperTemplate, quickStart, quickBusy, srcImage, setSrcImage, rewritePage, undo, redo, canUndo: past.current.length > 0, canRedo: future.current.length > 0,
-    user, authReady, signIn, signUp, signOut, saved, openSaved, deleteSaved, saveState, savedAt,
+    user, authReady, authRequired, signIn, signOut, saved, openSaved, deleteSaved, saveState, savedAt,
   };
   // raw (unguarded) step setter used internally by screens that already validated
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

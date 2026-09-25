@@ -1,5 +1,5 @@
 "use client";
-import { Trash2, Building2, FolderOpen, LayoutDashboard, LayoutTemplate, LogIn, LogOut, Plus, SwatchBook } from "lucide-react";
+import { Trash2, Building2, FolderOpen, LayoutDashboard, LayoutTemplate, LogOut, Plus, SwatchBook } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { PROJECTS } from "@/lib/mock";
 import { useStudio, type View } from "@/lib/store";
@@ -60,14 +60,11 @@ export default function Sidebar() {
       <div className="border-t border-line p-4">
         {user ? (
           <>
-            <div className="truncate text-[13.5px] text-mute" title={user.email}>{user.email}</div>
-            <button onClick={signOut} className="t mt-2 flex items-center gap-2 text-[14px] text-dim hover:text-fg"><LogOut size={14} strokeWidth={1.5} />退出登录</button>
+            <div className="truncate text-[12.5px] text-mute" title={user.email}>{user.email}</div>
+            <button onClick={signOut} className="t mt-2 flex items-center gap-2 text-[13px] text-dim hover:text-fg"><LogOut size={14} strokeWidth={1.5} />退出登录</button>
           </>
         ) : (
-          <>
-            <p className="text-[13px] leading-relaxed text-dim">项目保存在这台设备上。登录后可跨设备保存。</p>
-            <button onClick={() => setView("login")} className="t mt-2 flex items-center gap-2 text-[14px] text-fg underline underline-offset-4 hover:text-accent-ink"><LogIn size={14} strokeWidth={1.5} />登录 / 注册</button>
-          </>
+          <p className="text-[12px] leading-relaxed text-dim">项目保存在这台设备的浏览器里。</p>
         )}
       </div>
     </aside>

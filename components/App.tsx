@@ -3,7 +3,6 @@ import Sidebar from "./layout/Sidebar";
 import TopProgress from "./layout/TopProgress";
 import { Spinner, Toast } from "./ui";
 import { StudioProvider, useStudio } from "@/lib/store";
-import { supabaseConfigured } from "@/lib/supabase";
 import Dashboard, { ProjectsView } from "./screens/Dashboard";
 import { TemplatesView, DesignSystemView, BrandsView } from "./screens/Library";
 import Login from "./screens/Login";
@@ -16,12 +15,10 @@ import Workbench from "./workbench/Workbench";
 import Step7Preview from "./screens/Step7Preview";
 
 function Shell() {
-  const { view, step, advanced, quickBusy, user, authReady } = useStudio();
-  // 配置了 Supabase 就必须登录才能使用；未配置（例如本地没填变量）时不强制，避免应用无法打开
-  if (supabaseConfigured) {
-    if (!authReady) return <div className="min-h-screen bg-bg" />;
-    if (!user) return <><Login /><Toast /></>;
-  }
+  const { view, step, advanced, quickBusy, user, authReady, authRequired } = useStudio();
+  // 配置了登录就必须先登录才能使用；没配置（本地开发）时不强制
+  if (!authReady) return <div className="min-h-screen bg-bg" />;
+  if (authRequired && !user) return <><Login /><Toast /></>;
   if (view === "login") return <><Login /><Toast /></>;
   if (view === "wizard" && quickBusy) {
     return (

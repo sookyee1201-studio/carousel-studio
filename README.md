@@ -4,7 +4,7 @@
 
 - Next.js 16 · TypeScript · Tailwind CSS 4
 - 文案与图片生成：Gemini API（服务器端调用，Key 不会发到浏览器）
-- 登录与云端保存：Supabase（可选；不登录时项目保存在浏览器本地）
+- 登录：简单的单账号登录（服务器校验，只存密码哈希，登录后发带签名的 cookie）；项目保存在浏览器本地
 
 ## 本地运行
 
@@ -23,6 +23,6 @@ npm run dev                  # http://localhost:3456
 | `GEMINI_API_KEY` | Gemini API Key（AI 文案与图片生成） |
 | `GEMINI_MODEL` | 文案模型，默认 `gemini-3.8-flash` |
 | `GEMINI_IMAGE_MODEL` | 图片模型，默认 `gemini-3.1-flash-image` |
-| `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | 可选，登录与云端保存 |
-
-Supabase 需要一张 `carousel_projects` 表（含 RLS，仅本人可读写）。
+| `APP_LOGIN_EMAIL` | 登录邮箱。三项登录变量都配置了，才会强制登录；没配置时（本地开发）不强制 |
+| `APP_LOGIN_HASH` | 密码哈希（格式 `scrypt:盐:哈希`，生成方法见 `.env.example`），不要存明文密码 |
+| `APP_SESSION_SECRET` | 签名 cookie 用的随机字符串 |

@@ -1,5 +1,5 @@
-import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+import { authConfigured, readSession } from "@/lib/auth";
 import { limited } from "@/lib/rateLimit";
 
 export const maxDuration = 60;
@@ -7,16 +7,13 @@ export const maxDuration = 60;
 const ASPECTS = ["4:5", "1:1", "16:9", "3:4"];
 
 export async function POST(req: Request) {
-  const token = req.headers.get("authorization")?.replace("Bearer ", "");
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL, anon = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  // 配置了登录就必须先登录（保护你的 API 额度）；没配置（本地开发）时按 IP 限流
   let who = "img-ip:" + (req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "local");
   let max = 6;
-  if (url && anon) {
-    // 已配置登录：必须登录才能调用（保护你的 API 额度）
-    if (!token) return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
-    const { data, error } = await createClient(url, anon).auth.getUser(token);
-    if (error || !data.user) return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
-    who = "img-user:" + data.user.id; max = 40;
+  if (authConfigured()) {
+    const email = readSession(req);
+    if (!email) return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
+    who = "img-user:" + email; max = 40;
   }
   if (limited(who, max)) return NextResponse.json({ error: "RATE_LIMIT" }, { status: 429 });
 
