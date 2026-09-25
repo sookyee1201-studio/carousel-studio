@@ -2,10 +2,9 @@
 import { useState } from "react";
 import { Button, Field } from "@/components/ui";
 import { useStudio } from "@/lib/store";
-import { supabaseConfigured } from "@/lib/supabase";
 
 export default function Login() {
-  const { signIn, signUp, setView } = useStudio();
+  const { signIn, signUp } = useStudio();
   const [mode, setMode] = useState<"in" | "up">("in");
   const [email, setEmail] = useState("");
   const [pw, setPw] = useState("");
@@ -41,7 +40,6 @@ export default function Login() {
           <button type="button" onClick={() => { setMode(mode === "in" ? "up" : "in"); setMsg(null); }} className="t text-[14px] text-mute underline underline-offset-4 hover:text-fg">
             {mode === "in" ? "还没有账号？创建账号" : "已有账号？去登录"}
           </button>
-          <div className="border-t border-line2 pt-5"><button type="button" onClick={() => setView("dashboard")} className="t text-[14px] text-mute hover:text-fg">← 先不登录，直接试用</button></div>
         </form>
       </div>
     </div>
