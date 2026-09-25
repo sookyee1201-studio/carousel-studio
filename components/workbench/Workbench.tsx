@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
-import { ArrowLeft, Maximize2, Plus, X } from "lucide-react";
+import { ArrowLeft, ChevronDown, Download, Maximize2, Plus, X } from "lucide-react";
+import { exportAll, exportPage } from "@/lib/exportPng";
 import CarouselCanvas from "@/components/carousel/CarouselCanvas";
 import CarouselPreview from "@/components/carousel/CarouselPreview";
 import PageThumbnail from "@/components/carousel/PageThumbnail";
@@ -22,10 +23,24 @@ const TABS = ["风格", "内容", "版式", "画面", "完成"] as const;
 type Tab = (typeof TABS)[number];
 
 export default function Workbench({ topOffset = 0 }: { topOffset?: number }) {
-  const { pages, design, selectedPageId, selectPage, updatePage, reorder, addPage, project, setProjectTitle, setView, advanced, saveState, savedAt } = useStudio();
+  const { pages, design, selectedPageId, selectPage, updatePage, reorder, addPage, project, setProjectTitle, setView, advanced, saveState, savedAt, notify } = useStudio();
   const [tab, setTab] = useState<Tab>("风格");
   const [guides, setGuides] = useState(false);
   const [full, setFull] = useState(false);
+  const [menu, setMenu] = useState(false);
+  const [busy, setBusy] = useState<string | null>(null);
+  const downloadAll = async () => {
+    setMenu(false); setBusy("0");
+    try { await exportAll(pages, design, project.title, (n) => setBusy(String(n))); notify("已下载 ZIP：每页一张 1080×1350 的 PNG。"); }
+    catch { notify("下载失败，请再试一次。"); }
+    setBusy(null);
+  };
+  const downloadOne = async () => {
+    setMenu(false); setBusy("one");
+    try { await exportPage(page, idx, pages, design, project.title); notify(`已下载第 ${idx + 1} 页 PNG。`); }
+    catch { notify("下载失败，请再试一次。"); }
+    setBusy(null);
+  };
   const dnd = usePageDnd(reorder);
   const idx = Math.max(0, pages.findIndex((p) => p.id === selectedPageId));
   const page = pages[idx];
@@ -75,7 +90,22 @@ export default function Workbench({ topOffset = 0 }: { topOffset?: number }) {
           <div className="flex items-center gap-2">
             <UndoRedo />
             <Chip active={guides} onClick={() => setGuides((g) => !g)} className="h-9 text-[13.5px]">安全区</Chip>
-            <button onClick={() => setFull(true)} className="t flex h-9 items-center gap-2 rounded-full bg-fg px-4 text-[14px] font-medium text-bg hover:bg-[#3b342b]"><Maximize2 size={14} />满版预览</button>
+            <button onClick={() => setFull(true)} className="t flex h-9 items-center gap-2 rounded-full border border-line px-4 text-[14px] text-fg hover:border-fg"><Maximize2 size={14} />满版预览</button>
+            <div className="relative">
+              <div className="flex">
+                <button onClick={downloadAll} disabled={busy !== null} className="t flex h-9 items-center gap-2 rounded-l-full bg-accent px-4 text-[14px] font-medium text-white hover:bg-[#c2603f] disabled:opacity-60">
+                  <Download size={15} />{busy === null || busy === "one" ? "下载全部 PNG" : `导出中 ${busy}/${pages.length}…`}
+                </button>
+                <button onClick={() => setMenu((m) => !m)} aria-label="更多下载选项" disabled={busy !== null} className="t flex h-9 items-center rounded-r-full border-l border-white/30 bg-accent px-2.5 text-white hover:bg-[#c2603f] disabled:opacity-60"><ChevronDown size={15} /></button>
+              </div>
+              {menu && (
+                <div className="enter absolute right-0 top-full z-20 mt-1 w-[220px] border border-line bg-card py-1 shadow-[0_12px_30px_rgba(0,0,0,0.15)]">
+                  <button onClick={downloadAll} className="t block w-full px-4 py-2.5 text-left text-[14px] text-mute hover:bg-fg/[0.05] hover:text-fg">下载全部（ZIP）</button>
+                  <button onClick={downloadOne} className="t block w-full px-4 py-2.5 text-left text-[14px] text-mute hover:bg-fg/[0.05] hover:text-fg">只下载这一页</button>
+                  <button onClick={() => { setMenu(false); setTab("完成"); }} className="t block w-full px-4 py-2.5 text-left text-[14px] text-mute hover:bg-fg/[0.05] hover:text-fg">设计交付单…</button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
