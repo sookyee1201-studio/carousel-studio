@@ -258,7 +258,7 @@ export const PROJECTS: Project[] = [
   { id: "p2", title: "为什么老板越来越难做内容", client: "示例品牌 B", format: "IG Carousel · 8页", status: "Draft", edited: "今天 09:40", presetId: "premium-black" },
   { id: "p3", title: "AI不会取代Marketing", client: "示例品牌 A", format: "FB Carousel · 8页", status: "等待内容确认", edited: "昨天", presetId: "tech-dark" },
   { id: "p4", title: "客户不是因为价格不买", client: "示例品牌 C", format: "IG Carousel · 8页", status: "已完成", edited: "2 天前", presetId: "editorial-beige" },
-  { id: "p5", title: "Founder IP为什么重要", client: "示例品牌 B", format: "LinkedIn · 8页", status: "已完成", edited: "3 天前", presetId: "clean-white" },
+  { id: "p5", title: "小预算 Marketing，先做对这三件事", client: "示例品牌 B", format: "LinkedIn · 8页", status: "已完成", edited: "3 天前", presetId: "clean-white" },
   { id: "p6", title: "一条内容，怎么拆成七天素材", client: "示例品牌 A", format: "小红书 · 8页", status: "Draft", edited: "上周", presetId: "bold-yellow" },
 ];
 
@@ -269,7 +269,7 @@ export const TEMPLATES = [
   { id: "t2", name: "Framework 拆解", desc: "把一套方法讲成 5 步可执行框架", pages: "Hook → 问题 → 框架 → 每步说明 → CTA", topic: "把 Content Research 变成 5 步系统" },
   { id: "t3", name: "Case Study", desc: "客户结果 + 做法 + 可复制的原则", pages: "Hook → 背景 → 做法 → 结果 → 原则 → CTA", topic: "一个 SME 如何用 30 天拿到 120 个 Lead" },
   { id: "t4", name: "Before / After", desc: "用对比让转变一眼可见", pages: "Hook → Before → 转折 → After → CTA", topic: "同一个产品，两种内容策略的差别" },
-  { id: "t5", name: "Founder Story", desc: "个人叙事带出观点与信任", pages: "Hook → 起点 → 低谷 → 转折 → 教训 → CTA", topic: "我为什么把 Founder IP 当作第一优先" },
+  { id: "t5", name: "品牌故事", desc: "用一个转折带出 Marketing 观点", pages: "Hook → 起点 → 问题 → 转折 → 教训 → CTA", topic: "我们为什么把 Marketing 预算从广告转到内容" },
   { id: "t6", name: "Checklist / 清单", desc: "高收藏率的实用清单", pages: "Hook → 清单 1–6 → 总结 → CTA", topic: "发布前必检的 7 件事" },
 ];
 
